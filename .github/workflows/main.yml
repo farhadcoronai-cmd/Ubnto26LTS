@@ -16,6 +16,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Unpack codm-stealth.zip if uploaded as archive
+        run: |
+          if [ -f codm-stealth.zip ]; then
+            unzip -oq codm-stealth.zip -x ".github/*" "*/.github/*"
+            if [ ! -f settings.gradle.kts ]; then
+              SUBDIR=$(find . -maxdepth 2 -name "settings.gradle.kts" -exec dirname {} \; | head -n 1)
+              if [ -n "$SUBDIR" ] && [ "$SUBDIR" != "." ]; then
+                cp -rf "$SUBDIR"/. .
+                rm -rf "$SUBDIR"
+              fi
+            fi
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -35,7 +48,7 @@ jobs:
           targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
 
       - name: Install cargo-ndk
-        uses: taiki-e/install-action@cargo-ndk
+        run: cargo install cargo-ndk --locked
 
       - name: Build Rust Core (16KB ELF Page Alignment)
         env:
